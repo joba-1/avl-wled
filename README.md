@@ -1,5 +1,7 @@
 # avl-wled
 
+<img src="logo.svg" alt="avl-wled" width="96" align="right"/>
+
 Small Linux service that watches an AVL waste-collection iCal feed and drives
 a [WLED](https://kno.wled.ge/) strip to remind you that the bin needs to go
 out. Written in C++17, single binary, only depends on `libcurl` and the
