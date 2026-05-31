@@ -9,11 +9,17 @@ UNITDIR  ?= /etc/systemd/system
 
 all: avl-wled
 
-avl-wled: avl-wled.cpp
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDLIBS)
+avl-wled: avl-wled.cpp core.h
+	$(CXX) $(CXXFLAGS) -o $@ avl-wled.cpp $(LDLIBS)
+
+tests/unit: tests/unit.cpp tests/doctest.h core.h
+	$(CXX) $(CXXFLAGS) -I tests -o $@ tests/unit.cpp
+
+test: tests/unit
+	./tests/unit
 
 clean:
-	rm -f avl-wled
+	rm -f avl-wled tests/unit
 
 install: avl-wled
 	install -d $(DESTDIR)$(BINDIR)
@@ -28,4 +34,4 @@ uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/avl-wled
 	rm -f $(DESTDIR)$(UNITDIR)/avl-wled.service
 
-.PHONY: all clean install uninstall
+.PHONY: all clean install uninstall test

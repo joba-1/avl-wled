@@ -7,16 +7,13 @@ minor, full system on major.
 
 ### Unit (run before every commit)
 
-There is currently no unit-test harness wired up. Smallest practical
-plan for adding one:
+Wired up. Pure helpers live in `core.h`; the suite is `tests/unit.cpp`
+using the vendored single-header `tests/doctest.h`, with iCal fixtures
+under `tests/data/`. Run with:
 
-- Extract the pure helpers (`parseHex`, `parseIcalDt`, `parseIcal`,
-  `unfold`, `isNightTime`, `colorFor`, `buildWledJson`,
-  `recomputeActive`) into a header so a `tests/` translation unit can
-  link them.
-- Use a single-header framework (e.g. doctest) to keep the dep
-  footprint minimal — `tests/unit.cpp` + `tests/data/*.ics` fixtures.
-- `make test` runs the suite; CI gate: must pass before merge.
+```sh
+make test
+```
 
 Minimum cases:
 
@@ -77,7 +74,7 @@ journalctl -u avl-wled -n 20
 
 ## Known gaps
 
-- No automated test harness yet — see "Unit" above; tracked as the
-  first follow-up.
+- Component/integration and system levels are still manual (no
+  automated stub WLED server / fixture HTTP server yet).
 - No fuzzing of the iCal parser; the parser is defensive against
   short/missing fields but has not been fuzz-tested.

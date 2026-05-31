@@ -1,4 +1,5 @@
 avl-wled
+tests/unit
 *.o
 *.d
 *.swp
