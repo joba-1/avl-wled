@@ -1,0 +1,7 @@
+avl-wled
+*.o
+*.d
+*.swp
+.vscode/
+.idea/
+build/

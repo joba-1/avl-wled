@@ -1,0 +1,32 @@
+[Unit]
+Description=AVL waste calendar -> WLED indicator
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=avl-wled
+Group=avl-wled
+ExecStart=/usr/local/bin/avl-wled --config=/etc/avl-wled.conf
+Restart=on-failure
+RestartSec=10
+
+StateDirectory=avl-wled
+StateDirectoryMode=0755
+
+# hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+
+[Install]
+WantedBy=multi-user.target
