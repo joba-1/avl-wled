@@ -220,12 +220,12 @@ static void httpServerLoop(int port) {
               << "body{display:flex;flex-direction:column;min-height:100vh;"
                  "padding:env(safe-area-inset-top) env(safe-area-inset-right)"
                  " env(safe-area-inset-bottom) env(safe-area-inset-left)}"
-              << ".top{flex:1 1 50%;display:flex;align-items:center;"
-                 "justify-content:center;padding:1rem}"
-              << ".bot{flex:1 1 50%;overflow-y:auto;padding:1rem;"
+              << ".top{flex:0 0 40%;display:flex;align-items:center;"
+                 "justify-content:center;padding:2.5rem}"
+              << ".bot{flex:1 1 60%;overflow-y:auto;padding:1rem;"
                  "border-top:1px solid #333;background:#181818}"
               << "form{width:100%;height:100%}"
-              << "button{width:100%;height:100%;min-height:40vh;border:0;"
+              << "button{width:100%;height:100%;border:0;"
                  "border-radius:1.5rem;font-size:2rem;font-weight:700;"
                  "color:#000;cursor:pointer;"
                  "box-shadow:0 6px 18px rgba(0,0,0,.4);"
@@ -268,12 +268,15 @@ static void httpServerLoop(int port) {
                 o << "<li class=\"empty\">no upcoming events</li>";
             } else {
                 std::time_t now = std::time(nullptr);
+                struct tm today_lt; localtime_r(&now, &today_lt);
                 for (auto& n : nxt) {
                     char ts[32];
                     struct tm lt; localtime_r(&n.event->start, &lt);
-                    long days = (n.event->start - now) / 86400;
-                    if (days <= 6) strftime(ts, sizeof(ts), "%a %H:%M", &lt);
-                    else strftime(ts, sizeof(ts), "%d.%m. %H:%M", &lt);
+                    int dday = lt.tm_yday - today_lt.tm_yday
+                             + (lt.tm_year - today_lt.tm_year) * 365;
+                    if (dday == 0)      snprintf(ts, sizeof(ts), "heute");
+                    else if (dday == 1) snprintf(ts, sizeof(ts), "morgen");
+                    else                strftime(ts, sizeof(ts), "%d.%m.", &lt);
                     RGB col = colorFor(g.cfg, n.event->summary);
                     o << "<li>"
                       << "<span class=\"sw\" style=\"background:rgb("
@@ -288,6 +291,9 @@ static void httpServerLoop(int port) {
                             default:  o << ch;
                         }
                     }
+                    if (g.acked.count(n.event->uid))
+                        o << " <em style=\"color:#7c7;font-style:normal\">"
+                             "draußen</em>";
                     o << "</span></li>";
                 }
             }
