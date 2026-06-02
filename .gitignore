@@ -6,3 +6,4 @@ tests/unit
 .vscode/
 .idea/
 build/
+apple_touch_icon.h

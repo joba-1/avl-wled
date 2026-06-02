@@ -5,15 +5,13 @@
   <rect width="128" height="128" fill="#101418"/>
   <!-- LED strip background -->
   <rect x="8" y="22" width="112" height="14" rx="3" fill="#1c2026" stroke="#2a2f37" stroke-width="1"/>
-  <!-- 5 LED segments: red (urgent), brown (bio), blue (paper), yellow (gelb), dim (off) -->
+  <!-- 5 LED segments using config colors (bio, papier, gelb, glas, schadstoff) -->
   <g>
-    <rect x="12" y="25" width="20" height="8" rx="1.5" fill="#ff2a2a">
-      <animate attributeName="opacity" values="1;0.35;1" dur="1.4s" repeatCount="indefinite"/>
-    </rect>
-    <rect x="34" y="25" width="20" height="8" rx="1.5" fill="#7a4a1a"/>
-    <rect x="56" y="25" width="20" height="8" rx="1.5" fill="#1f6cff"/>
-    <rect x="78" y="25" width="20" height="8" rx="1.5" fill="#ffcc00"/>
-    <rect x="100" y="25" width="16" height="8" rx="1.5" fill="#22262d"/>
+    <rect x="12" y="25" width="20" height="8" rx="1.5" fill="#663300"/>
+    <rect x="34" y="25" width="20" height="8" rx="1.5" fill="#00A000"/>
+    <rect x="56" y="25" width="20" height="8" rx="1.5" fill="#FFCC00"/>
+    <rect x="78" y="25" width="20" height="8" rx="1.5" fill="#0040FF"/>
+    <rect x="100" y="25" width="16" height="8" rx="1.5" fill="#FF8800"/>
   </g>
   <!-- Glow under the lit segments -->
   <g opacity="0.35" filter="url(#blur)">

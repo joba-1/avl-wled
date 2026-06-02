@@ -2,6 +2,7 @@
 // Build: g++ -O2 -std=c++17 -o avl-wled avl-wled.cpp -lcurl -lpthread
 
 #include "core.h"
+#include "apple_touch_icon.h"
 
 #include <atomic>
 #include <chrono>
@@ -197,6 +198,13 @@ static void httpServerLoop(int port) {
                 continue;
             }
             body = did ? "acknowledged\n" : "nothing to acknowledge\n";
+        } else if (path == "/apple-touch-icon.png"
+                || path == "/apple-touch-icon-precomposed.png"
+                || path == "/favicon.ico"
+                || path == "/favicon.png") {
+            ctype = "image/png";
+            body.assign((const char*)apple_touch_icon_png,
+                        apple_touch_icon_png_len);
         } else if (path == "/") {
             std::lock_guard<std::mutex> lk(g_mu);
             ctype = "text/html; charset=utf-8";
@@ -208,11 +216,21 @@ static void httpServerLoop(int port) {
             auto nxt = nextByType(g.cfg, g.events, std::time(nullptr));
 
             std::ostringstream o;
-            o << "<!doctype html><html lang=\"en\"><head>"
+            o << "<!doctype html><html lang=\"de\"><head>"
               << "<meta charset=\"utf-8\">"
               << "<meta name=\"viewport\" content=\"width=device-width,"
                  "initial-scale=1,viewport-fit=cover\">"
               << "<title>AVL</title>"
+              << "<link rel=\"icon\" type=\"image/png\" "
+                 "href=\"/favicon.png\">"
+              << "<link rel=\"apple-touch-icon\" "
+                 "href=\"/apple-touch-icon.png\">"
+              << "<meta name=\"apple-mobile-web-app-capable\" "
+                 "content=\"yes\">"
+              << "<meta name=\"apple-mobile-web-app-title\" "
+                 "content=\"AVL\">"
+              << "<meta name=\"apple-mobile-web-app-status-bar-style\" "
+                 "content=\"black-translucent\">"
               << "<style>"
               << "*{box-sizing:border-box;margin:0;padding:0}"
               << "html,body{height:100%;font-family:system-ui,-apple-system,"
@@ -251,21 +269,21 @@ static void httpServerLoop(int port) {
 
             o << "<div class=\"top\"><form method=\"post\" action=\"/ack\">";
             if (g.active.empty()) {
-                o << "<button type=\"button\" disabled>All clear</button>";
+                o << "<button type=\"button\" disabled>Alles erledigt</button>";
             } else {
-                const char* label = any_urgent ? "Acknowledge" : "Acknowledge";
-                o << "<button type=\"submit\">" << label << "<br>"
+                o << "<button type=\"submit\">Bestätigen<br>"
                   << "<span style=\"font-size:1rem;font-weight:400;"
                      "display:block;margin-top:.5rem;opacity:.8\">"
-                  << g.active.size() << " active event"
-                  << (g.active.size() == 1 ? "" : "s")
+                  << g.active.size()
+                  << (g.active.size() == 1 ? " offener Termin"
+                                           : " offene Termine")
                   << "</span></button>";
             }
             o << "</form></div>";
 
-            o << "<div class=\"bot\"><h2>Upcoming</h2><ul>";
+            o << "<div class=\"bot\"><h2>Demnächst</h2><ul>";
             if (nxt.empty()) {
-                o << "<li class=\"empty\">no upcoming events</li>";
+                o << "<li class=\"empty\">keine anstehenden Termine</li>";
             } else {
                 std::time_t now = std::time(nullptr);
                 struct tm today_lt; localtime_r(&now, &today_lt);
