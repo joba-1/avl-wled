@@ -297,7 +297,9 @@ inline std::string buildWledJson(const Config& cfg,
 
     int seg_count = 1 + (int)codes.size();
     if (seg_count > cfg.max_segments) seg_count = cfg.max_segments;
-    int leds_per  = cfg.led_count / seg_count;
+    int event_count = seg_count - 1;
+    int total_parts = 1 + 2 * event_count;
+    int leds_per  = cfg.led_count / total_parts;
     if (leds_per < 1) leds_per = 1;
 
     RGB status = parseHex(any_urgent ? cfg.urgent_color : cfg.normal_color);
@@ -318,8 +320,8 @@ inline std::string buildWledJson(const Config& cfg,
     emit(0, pos, pos + leds_per, status);
     pos += leds_per;
 
-    for (int i = 0; i < seg_count - 1; ++i) {
-        int stop = (i == seg_count - 2) ? cfg.led_count : (pos + leds_per);
+    for (int i = 0; i < event_count; ++i) {
+        int stop = (i == event_count - 1) ? cfg.led_count : (pos + 2 * leds_per);
         emit(i + 1, pos, stop, codes[i].color);
         pos = stop;
     }
