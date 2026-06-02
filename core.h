@@ -103,7 +103,10 @@ inline void loadConfigFile(Config& c, const std::string& path) {
         size_t eq = t.find('=');
         if (eq == std::string::npos) continue;
         std::string k = trim(t.substr(0, eq));
-        std::string v = trim(t.substr(eq + 1));
+        std::string v = t.substr(eq + 1);
+        size_t hash = v.find('#');
+        if (hash != std::string::npos) v = v.substr(0, hash);
+        v = trim(v);
         if (!applyKV(c, k, v))
             std::cerr << "config " << path << ":" << lineno
                       << ": unknown key '" << k << "'\n";

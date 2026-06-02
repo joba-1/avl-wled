@@ -183,8 +183,117 @@ static void httpServerLoop(int port) {
             path.rfind("/ack/", 0) == 0) {
             std::lock_guard<std::mutex> lk(g_mu);
             bool did = handleAcknowledge();
+            if (method == "POST") {
+                code = 303;
+                body = "";
+                std::ostringstream resp;
+                resp << "HTTP/1.0 303 See Other\r\n"
+                     << "Location: /\r\n"
+                     << "Content-Length: 0\r\n"
+                     << "Connection: close\r\n\r\n";
+                std::string s_resp = resp.str();
+                send(c, s_resp.data(), s_resp.size(), 0);
+                close(c);
+                continue;
+            }
             body = did ? "acknowledged\n" : "nothing to acknowledge\n";
-        } else if (path == "/status" || path == "/") {
+        } else if (path == "/") {
+            std::lock_guard<std::mutex> lk(g_mu);
+            ctype = "text/html; charset=utf-8";
+            bool any_urgent = false;
+            for (auto& a : g.active) if (a.urgent) { any_urgent = true; break; }
+            std::string status_hex = g.active.empty()
+                ? std::string("888888")
+                : (any_urgent ? g.cfg.urgent_color : g.cfg.normal_color);
+            auto nxt = nextByType(g.cfg, g.events, std::time(nullptr));
+
+            std::ostringstream o;
+            o << "<!doctype html><html lang=\"en\"><head>"
+              << "<meta charset=\"utf-8\">"
+              << "<meta name=\"viewport\" content=\"width=device-width,"
+                 "initial-scale=1,viewport-fit=cover\">"
+              << "<title>AVL</title>"
+              << "<style>"
+              << "*{box-sizing:border-box;margin:0;padding:0}"
+              << "html,body{height:100%;font-family:system-ui,-apple-system,"
+                 "Segoe UI,Roboto,sans-serif;background:#111;color:#eee}"
+              << "body{display:flex;flex-direction:column;min-height:100vh;"
+                 "padding:env(safe-area-inset-top) env(safe-area-inset-right)"
+                 " env(safe-area-inset-bottom) env(safe-area-inset-left)}"
+              << ".top{flex:1 1 50%;display:flex;align-items:center;"
+                 "justify-content:center;padding:1rem}"
+              << ".bot{flex:1 1 50%;overflow-y:auto;padding:1rem;"
+                 "border-top:1px solid #333;background:#181818}"
+              << "form{width:100%;height:100%}"
+              << "button{width:100%;height:100%;min-height:40vh;border:0;"
+                 "border-radius:1.5rem;font-size:2rem;font-weight:700;"
+                 "color:#000;cursor:pointer;"
+                 "box-shadow:0 6px 18px rgba(0,0,0,.4);"
+                 "background:#" << status_hex << "}"
+              << "button:active{transform:scale(.98)}"
+              << "button:disabled{background:#444;color:#888;cursor:default;"
+                 "box-shadow:none}"
+              << "h2{font-size:1rem;font-weight:600;color:#9aa;"
+                 "text-transform:uppercase;letter-spacing:.05em;"
+                 "margin-bottom:.5rem}"
+              << "ul{list-style:none}"
+              << "li{display:flex;align-items:center;gap:.75rem;"
+                 "padding:.6rem 0;border-bottom:1px solid #262626}"
+              << "li:last-child{border-bottom:0}"
+              << ".sw{width:1.1rem;height:1.1rem;border-radius:50%;"
+                 "flex:0 0 auto;border:1px solid #0004}"
+              << ".when{flex:0 0 auto;font-variant-numeric:tabular-nums;"
+                 "color:#ddd;font-weight:600}"
+              << ".sum{flex:1 1 auto;color:#bbb;overflow:hidden;"
+                 "text-overflow:ellipsis;white-space:nowrap}"
+              << ".empty{color:#888;font-style:italic}"
+              << "</style></head><body>";
+
+            o << "<div class=\"top\"><form method=\"post\" action=\"/ack\">";
+            if (g.active.empty()) {
+                o << "<button type=\"button\" disabled>All clear</button>";
+            } else {
+                const char* label = any_urgent ? "Acknowledge" : "Acknowledge";
+                o << "<button type=\"submit\">" << label << "<br>"
+                  << "<span style=\"font-size:1rem;font-weight:400;"
+                     "display:block;margin-top:.5rem;opacity:.8\">"
+                  << g.active.size() << " active event"
+                  << (g.active.size() == 1 ? "" : "s")
+                  << "</span></button>";
+            }
+            o << "</form></div>";
+
+            o << "<div class=\"bot\"><h2>Upcoming</h2><ul>";
+            if (nxt.empty()) {
+                o << "<li class=\"empty\">no upcoming events</li>";
+            } else {
+                std::time_t now = std::time(nullptr);
+                for (auto& n : nxt) {
+                    char ts[32];
+                    struct tm lt; localtime_r(&n.event->start, &lt);
+                    long days = (n.event->start - now) / 86400;
+                    if (days <= 6) strftime(ts, sizeof(ts), "%a %H:%M", &lt);
+                    else strftime(ts, sizeof(ts), "%d.%m. %H:%M", &lt);
+                    RGB col = colorFor(g.cfg, n.event->summary);
+                    o << "<li>"
+                      << "<span class=\"sw\" style=\"background:rgb("
+                      << col.r << "," << col.g << "," << col.b << ")\"></span>"
+                      << "<span class=\"when\">" << ts << "</span>"
+                      << "<span class=\"sum\">";
+                    for (char ch : n.event->summary) {
+                        switch (ch) {
+                            case '<': o << "&lt;"; break;
+                            case '>': o << "&gt;"; break;
+                            case '&': o << "&amp;"; break;
+                            default:  o << ch;
+                        }
+                    }
+                    o << "</span></li>";
+                }
+            }
+            o << "</ul></div></body></html>";
+            body = o.str();
+        } else if (path == "/status") {
             std::lock_guard<std::mutex> lk(g_mu);
             std::ostringstream o;
             o << "events: " << g.events.size() << "\n"
