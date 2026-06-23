@@ -237,7 +237,7 @@ inline std::vector<ActiveCode> computeActive(
         bool urgent = delta <= cfg.urgent_window;
         bool warn   = delta <= cfg.warn_window;
         if (!urgent && !warn) continue;
-        if (!urgent && night) continue;
+        if (night) continue;   // night: device fully off, even for urgent events
         ActiveCode a;
         a.uid    = e.uid;
         a.start  = e.start;

@@ -170,14 +170,13 @@ TEST_CASE("computeActive urgent / warn / night / past / acked") {
     CHECK(out[1].uid == "warn");
     CHECK(!out[1].urgent);
 
-    // At 3 AM: night suppresses non-urgent, urgent stays.
+    // At 3 AM: night suppresses everything, even urgent -> device off.
     std::time_t night = makeLocal(2026, 6, 1, 3);
     std::vector<Event> evs2;
     evs2.push_back({"u", "x", night + 30 * 60});
     evs2.push_back({"w", "x", night + 12 * 3600});
     auto out2 = computeActive(c, evs2, {}, night);
-    REQUIRE(out2.size() == 1);
-    CHECK(out2[0].uid == "u");
+    CHECK(out2.empty());
 }
 
 // ---------- nextByType ----------
